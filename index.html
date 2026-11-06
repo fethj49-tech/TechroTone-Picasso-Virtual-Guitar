@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TechroTone Picasso Audio Brush Virtual Guitar</title>
+  <style>
+    :root {
+      --bg-dark: #0a0c10;
+      --panel-bg: #12161f;
+      --accent-cyan: #00f3ff;
+      --accent-magenta: #ff0055;
+      --text-main: #e0e6ed;
+      --fret-metal: #4a5568;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header Console */
+    header {
+      height: 48px;
+      background: var(--panel-bg);
+      border-bottom: 1px solid #1a2332;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+    }
+
+    .brand-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+    }
+
+    .brand-sub {
+      font-size: 10px;
+      color: #8a99ad;
+      margin-left: 8px;
+    }
+
+    .status-badge {
+      font-size: 11px;
+      background: #1e293b;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    /* Workspace Layout */
+    .workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 8px;
+      padding: 8px;
+      height: calc(100vh - 48px);
+    }
+
+    /* Playable Neck Surface */
+    .neck-container {
+      background: #14110f;
+      border: 1px solid #2a2421;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      overflow-x: auto;
+      overflow-y: hidden;
+      position: relative;
+    }
+
+    .headstock {
+      min-width: 70px;
+      background: #1a1816;
+      border-right: 4px solid #3d352e;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      padding: 12px 0;
+      position: sticky;
+      left: 0;
+      z-index: 10;
+    }
+
+    .open-note-btn {
+      background: #2a2421;
+      border: 1px solid var(--accent-cyan);
+      color: var(--accent-cyan);
+      font-size: 10px;
+      padding: 6px 4px;
+      margin: 0 6px;
+      border-radius: 3px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .fretboard {
+      display: flex;
+      flex: 1;
+      min-width: 1800px; /* Ensures 24 frets are scrollable */
+    }
+
+    .fret {
+      flex: 1;
+      border-right: 2px solid var(--fret-metal);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      position: relative;
+      background: linear-gradient(180deg, #181513 0%, #0d0b0a 100%);
+    }
+
+    .fret-number {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      color: #665c54;
+    }
+
+    .string-note {
+      height: 14%;
+      margin: 2px 0;
+      background: rgba(255, 255, 255, 0.03);
+      border-top: 1px solid #3c3836;
+      border-bottom: 1px solid #3c3836;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .string-note:active {
+      background: rgba(0, 243, 255, 0.25);
+    }
+
+    /* Body Panel - Fret-Trig Matrix */
+    .body-panel {
+      background: var(--panel-bg);
+      border: 1px solid #1a2332;
+      border-radius: 6px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .panel-header {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8a99ad;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .fret-trig-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      flex: 1;
+    }
+
+    .trig-pad {
+      background: #1a2332;
+      border: 1px solid #2d3b54;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #a0aec0;
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+
+    .trig-pad:active, .trig-pad.active {
+      background: var(--accent-magenta);
+      border-color: #ff6699;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
+    }
+
+    /* FX & Cubist Sound Display */
+    .dsp-console {
+      height: 80px;
+      background: #0d1117;
+      border: 1px solid #1a2332;
+      border-radius: 4px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 10px;
+      color: var(--accent-cyan);
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <span class="brand-title">TechroTone Picasso Audio Brush</span>
+      <span class="brand-sub">ztTechroTone Audio by TechroLim</span>
+    </div>
+    <div class="status-badge" id="audio-status">Audio: Standby (Tap Neck)</div>
+  </header>
+
+  <div class="workspace">
+    <!-- Main Playing Surface (Neck) -->
+    <div class="neck-container">
+      <div class="fretboard" id="fretboard">
+        <div class="headstock">
+          <div class="open-note-btn" onclick="playSynthNote(82.41)">E2</div>
+          <div class="open-note-btn" onclick="playSynthNote(110.00)">A2</div>
+          <div class="open-note-btn" onclick="playSynthNote(146.83)">D3</div>
+          <div class="open-note-btn" onclick="playSynthNote(196.00)">G3</div>
+          <div class="open-note-btn" onclick="playSynthNote(246.94)">B3</div>
+          <div class="open-note-btn" onclick="playSynthNote(329.63)">E4</div>
+        </div>
+        <!-- 24 Frets programmatically generated by JS -->
+      </div>
+    </div>
+
+    <!-- Independent Auxiliary Body Panel -->
+    <div class="body-panel">
+      <div class="panel-header">
+        <span>Fret-Trig™ Body Panel</span>
+        <span>16-Pad Matrix</span>
+      </div>
+
+      <div class="fret-trig-grid" id="trig-grid">
+        <!-- 16 Body-Mounted Trigger Pads -->
+      </div>
+
+      <div class="dsp-console" id="dsp-log">
+        > Interdimensional FX Engine: Ready<br>
+        > Cubist Texture Mapping: Active
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Audio Context Setup
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        document.getElementById('audio-status').innerText = "Audio: Engine Active";
+        logDSP("AudioContext initialized successfully.");
+      }
+    }
+
+    function logDSP(msg) {
+      const consoleEl = document.getElementById('dsp-log');
+      consoleEl.innerHTML += `<br>> ${msg}`;
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    // Synthesize Electric Guitar/Cubist Voice
+    function playSynthNote(freq) {
+      initAudio();
+      
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+      // Lowpass filter for guitar tone shaping
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
+
+      // Amplitude Envelope
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 1.5);
+
+      logDSP(`Stroke Note: ${freq.toFixed(1)} Hz`);
+    }
+
+    // Generate 24 Frets
+    const fretboard = document.getElementById('fretboard');
+    const baseFreqs = [82.41, 110.00, 146.83, 196.00, 246.94, 329.63];
+
+    for (let f = 1; f <= 24; f++) {
+      const fret = document.createElement('div');
+      fret.className = 'fret';
+      
+      const num = document.createElement('div');
+      num.className = 'fret-number';
+      num.innerText = f;
+      fret.appendChild(num);
+
+      for (let s = 0; s < 6; s++) {
+        const stringNode = document.createElement('div');
+        stringNode.className = 'string-note';
+        
+        // Equal temperament note formula: f = f0 * (2 ^ (n/12))
+        const noteFreq = baseFreqs[s] * Math.pow(2, f / 12);
+        
+        stringNode.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          playSynthNote(noteFreq);
+        });
+        stringNode.addEventListener('mousedown', () => playSynthNote(noteFreq));
+        
+        fret.appendChild(stringNode);
+      }
+      fretboard.appendChild(fret);
+    }
+
+    // Generate 16 Fret-Trig Body Pads with Hold/Multi-tap Logic
+    const trigGrid = document.getElementById('trig-grid');
+
+    for (let p = 1; p <= 16; p++) {
+      const pad = document.createElement('div');
+      pad.className = 'trig-pad';
+      pad.innerText = `PAD ${p}`;
+
+      let tapTimer = null;
+      let tapCount = 0;
+      let holdTimer = null;
+
+      const handlePressStart = (e) => {
+        if (e) e.preventDefault();
+        initAudio();
+        pad.classList.add('active');
+
+        holdTimer = setTimeout(() => {
+          logDSP(`Fret-Trig [Pad ${p}]: 350ms Hold Triggered`);
+          tapCount = 0;
+        }, 350);
+      };
+
+      const handlePressEnd = (e) => {
+        if (e) e.preventDefault();
+        pad.classList.remove('active');
+        clearTimeout(holdTimer);
+
+        tapCount++;
+        if (tapCount === 1) {
+          tapTimer = setTimeout(() => {
+            logDSP(`Fret-Trig [Pad ${p}]: Single-Push`);
+            tapCount = 0;
+          }, 250);
+        } else if (tapCount === 2) {
+          clearTimeout(tapTimer);
+          logDSP(`Fret-Trig [Pad ${p}]: Double-Push`);
+          tapCount = 0;
+        }
+      };
+
+      pad.addEventListener('touchstart', handlePressStart);
+      pad.addEventListener('touchend', handlePressEnd);
+      pad.addEventListener('mousedown', handlePressStart);
+      pad.addEventListener('mouseup', handlePressEnd);
+
+      trigGrid.appendChild(pad);
+    }
+  </script>
+</body>
+</html>
